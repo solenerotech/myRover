@@ -1,0 +1,192 @@
+<!--
+########################################################################
+# Program Name: Browser_Client_Coder.html
+# ================================
+# This code is for controlling a robot by a web browser using web sockets
+# http://www.dexterindustries.com/
+# History
+# ------------------------------------------------
+# Author     Comments
+# Joshwa     Initial Authoring
+#
+# These files have been made available online through a Creative Commons Attribution-ShareAlike 3.0  license.
+# (http://creativecommons.org/licenses/by-sa/3.0/)
+#
+########################################################################
+-->
+<!-- This code implements the web socket connection between client(web page on a Computer) and a server(raspberry pi) -->
+<!-- It sends data from web page using buttons and Keyboard presses to control the BrickPi robot -->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>myR - configuration page</title>
+    <link href="css/style.css" rel="stylesheet">
+    <script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
+
+    <style type="text/css">
+    #camera {
+            width: 100%;
+            height: 100%;
+            }
+    #sliders {
+        height: 80%;
+        width: 100%;
+        position: absolute;
+        top: 10%;
+        left: 0px;
+        }
+    #slider {
+        height: 10%;
+        width: 50%;
+        position: absolute;
+        left: 0px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div id="send">
+    <input type="text" id="data" style="height: 20px; width: 100px;position: absolute; left: 0px; top: 0px" value="192.168.0.10" size="10"/>
+    <input id="clickMe" type="button" style="height: 25px; width: 50px;position: absolute; left: 110px; top: 0px" value="ok" onclick="setup2()" />
+</div>
+
+<div id="sliders">
+    <input type="range" id="slider" style="top: 0%" min="0" max="255" step="5" value="30" onChange="setCam(this.value,'Hmin');">
+    <font id="Hmin" value="0" color="red" style="height:10%;width:50%;position: absolute; left: 50%; top: 0%">Hmin</font>
+
+    <input type="range" id="slider" style="top: 10%" min="0" max="255" step="5" value="0" onChange="setCam(this.value,'Smin');">
+    <font id="Smin" value="0" color="red" style="height:10%;width:50%;position: absolute; left: 50%; top: 10%">Smin</font>
+
+    <input type="range" id="slider" style="top: 20%" min="0" max="255" step="5" value="180" onChange="setCam(this.value,'Vmin');">
+    <font id="Vmin" value="0" color="red" style="height:10%;width:50%;position: absolute; left: 50%; top: 20%">Vmin</font>
+
+
+    <input type="range" id="slider" style="top: 30%" min="0" max="255" step="5" value="100" onChange="setCam(this.value,'Hmax');">
+    <font id="Hmax" value="0" color="red" style="height:10%;width:50%;position: absolute; left: 50%; top: 30%">Hmax</font>
+
+    <input type="range" id="slider" style="top: 40%" min="0" max="255" step="5" value="255" onChange="setCam(this.value,'Smax');">
+    <font id="Smax" value="0" color="red" style="height:10%;width:50%;position: absolute; left: 50%; top: 40%">Smax</font>
+
+    <input type="range" id="slider" style="top: 50%" min="0" max="255" step="5" value="255" onChange="setCam(this.value,'Vmax');">
+    <font id="Vmax" value="0" color="red" style="height:10%;width:50%;position: absolute; left: 50%; top: 50%">Vmax</font>
+
+
+    <input type="range" id="slider" style="top: 70%" min="0" max="2" step="1" value="255" onChange="setCam(this.value,'Resol');">
+    <font id="Resol" value="0" color="red" style="height:10%;width:50%;position: absolute; left: 50%; top: 70%">Resol</font>
+
+    <input type="range" id="slider" style="top: 80%" min="0" max="100" step="5" value="50" onChange="setCam(this.value,'Brig');">
+    <font id="Brig" value="0" color="red" style="height:10%;width:50%;position: absolute; left: 50%; top: 80%">Brig</font>
+
+    <input type="range" id="slider" style="top: 90%" min="-100" max="100" step="10" value="0" onChange="setCam(this.value,'Contr');">
+    <font id="Contr" value="0" color="red" style="height:10%;width:50%;position: absolute; left: 50%; top: 90%">Contr</font>
+
+</div>
+
+<img id="camera" src=""/>
+
+<script>
+var command;
+
+    function layoutControls() {
+        //var cameraImage = $('#camera');
+        //cameraImage.css( 'max-width', 1000 );
+        //cameraImage.css( 'max-height', 666 );
+        }
+
+    $(window).on( "orientationchange", function() {
+        setTimeout( layoutControls, 300 ); } );
+
+    $(document).ready(function() {
+        cameraURL = "http://192.168.0.10:9094/mask.mjpg";
+        $("#camera").attr( "src", cameraURL );
+
+    setInterval( function() {
+    $("#camera").attr( "src", cameraURL );
+    }, 1000 );
+
+    layoutControls();
+    });
+
+function setCam(num,res){
+    var result = document.getElementById(res);
+    result.innerHTML = res + ": " + num ;
+    command = "config " + res + " " +num
+
+    var $txt = $("#data");                  // assigns the data(hostname/ip address) entered in the text box
+    name = $txt.val()
+    var name = "192.168.0.10";                      // Variable name contains the string(hostname/ip address) entered in the text box
+
+    var host =  "ws://"+name+":9093/ws";     // combines the three string and creates a new string
+    var socket = new WebSocket(host);
+    var $txt = $("#data");
+    var $btnSend = $("#sendtext");
+    //$txt.focus();
+
+    // event handlers for UI
+    $btnSend.on('click',function()
+    {
+        var text = $txt.val();
+        if(text == "")
+        {
+            return;
+        }
+        $txt.val("");
+    });
+    $txt
+    .keypress(function(evt)
+    {
+        if(evt.which == 13)
+        {
+            $btnSend.click();
+        }
+    });
+
+    // event handlers for websocket
+    if(socket)
+    {
+        var count =1;
+        socket.onopen = function()
+        {
+            count = 0;
+            buttons();    // function for detecting the button press on webpage
+        }
+        //Send the button pressed backed to the Raspberry Pi
+        function buttons()
+        {
+            socket.send(command);
+        }
+
+        socket.onmessage = function(msg)
+        {
+            showServerResponse(msg.data);
+        }
+        socket.onclose = function()
+        {
+            //alert("connection closed....");
+            //showServerResponse("The connection has been closed.");
+        }
+    }
+    else
+    {
+        console.log("invalid socket");
+    }
+    function showServerResponse(txt)
+    {
+        var p = document.createElement('p');
+        p.innerHTML = txt;
+        document.getElementById('output').appendChild(p);
+    }
+}
+
+jQuery(function($)
+{
+  if (!("WebSocket" in window))
+  {
+    alert("Your browser does not support web sockets");
+  }
+});
+</script>
+</body>
+</html>
