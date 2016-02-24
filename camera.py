@@ -1,13 +1,26 @@
-# -*- coding: utf-8 -*-
+############################################################################
+#
+#    myRover- SW for controlling a rover by RPI
+#
+#    Copyright (C) 2016 Oscar Ferrato (solenero tech)
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
 
-#interferenza PWM con camera:
-    #se lancio PWM.setup() oppure PWM.setpup(delay_hw=PWM.DELAY_HW_PCM) prima di avviare lo streming ,
-    #la camera non si connette
-    #se lancio  PWM.setpup()oppure PWM.setpup(delay_hw=PWM.DELAY_HW_PCM) si connette ma crusha qunado chiudo il bowser
-    #anche chiamando PWM.cleanup()  prima di chiudere lo fa crushare quando chiudo
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
 
-#unico work aroud pssibile e' avviare PWM.setup solo dopo che ho config la camera
-#resta utile uare PCM  perche cosi' non interferisco col  sensore...
+#    You should have received a copy of the GNU General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+#    Contact me at:
+#    solenero.tech@gmail.com
+#    solenerotech.wordpress.com
+##############################################################################
+
 
 import threading
 import picamera
