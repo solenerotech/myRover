@@ -1,0 +1,277 @@
+<!--
+########################################################################
+# Program Name: Browser_Client_Coder.html
+# ================================
+# This code is for controlling a robot by a web browser using web sockets
+# http://www.dexterindustries.com/
+# History
+# ------------------------------------------------
+# Author     Comments
+# Joshwa     Initial Authoring
+#
+# These files have been made available online through a Creative Commons Attribution-ShareAlike 3.0  license.
+# (http://creativecommons.org/licenses/by-sa/3.0/)
+#
+########################################################################
+-->
+<!-- This code implements the web socket connection between client(web page on a Computer) and a server(raspberry pi) -->
+<!-- It sends data from web page using buttons and Keyboard presses to control the BrickPi robot -->
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="css/style.css" rel="stylesheet">
+<script src="http://code.jquery.com/jquery-1.9.1.min.js"> </script>
+
+<title>myR - rover controlled by Raspberry PI</title>
+
+<style type="text/css">
+
+#camera {
+            position: absolute;
+            left: 0px;
+            top: 5%;
+        }
+
+#header
+    {
+            height: 5%;
+            width: 100%;
+            position: absolute;
+            left: 0px;
+            top: 0px;
+    }
+
+#header_button
+    {
+            height: 100%;
+            width: 10%;
+            position: absolute;
+    }
+
+#joystick
+    {
+            position: absolute;
+            left: 66%;
+            top: 56%;
+    }
+
+#joystick_button
+    {
+            height: 33%;
+            width: 33%;
+            position: absolute;
+    }
+
+#footer
+    {
+            height: 5%;
+            width: 100%;
+            position: absolute;
+            left: 0px;
+            top: 95%;
+    }
+
+#footer_button
+    {
+            height: 100%;
+            width: 10%;
+            position: absolute;
+    }
+
+
+</style>
+
+
+</head>
+
+<body>
+
+<img id="camera"/>
+
+<div id="header">
+<input type="text" id="ip_data" style="height: 100%; width: 10%;position: absolute;left: 0%; top: 0%" value="192.168.0.10" size="10"/>
+<input id="header_button" type="button" style="left: 10%; top: 0px" value="ok" onclick="sendCmd('');" />
+
+<input id="header_button" style="left: 30%;" type="button" value="idle" onclick="sendCmd(this.value); " />
+<input id="header_button" style="left: 40%;" type="button" value="jog" onclick="sendCmd(this.value); " />
+<input id="header_button" style="left: 50%;" type="button" value="program" onclick="sendCmd(this.value); " />
+<input id="header_button" style="left: 60%;" type="button" value="exec" onclick="sendCmd(this.value); " />
+<input id="header_button" style="left: 70%;" type="button" value="discover" onclick="sendCmd(this.value); " />
+<input id="header_button" style="left: 80%;" type="button" value="search" onclick="sendCmd(this.value); " />
+<input id="header_button" style="left: 90%;" type="button" value="-" onclick="sendCmd(this.value); " />
+</div>
+
+<div id="joystick">
+<input id="joystick_button" style="left: 33%; top: 0%" type="button" value="up" onclick="sendCmd(this.value); " />
+<input id="joystick_button" style="left: 0%; top: 33%" type="button" value="left" onclick="sendCmd(this.value); " />
+<input id="joystick_button" style="left: 33%; top: 33%" type="button" value="brake" onclick="sendCmd(this.value); " />
+<input id="joystick_button" style="left: 66%; top: 33%" type="button" value="right" onclick="sendCmd(this.value); " />
+<input id="joystick_button" style="left: 33%; top: 66%" type="button" value="down" onclick="sendCmd(this.value); " />
+</div>
+
+<div id="footer">
+<input id="footer_button" style="left: 0%;" type="button" value="horn" onclick="sendCmd(this.value); " />
+<input id="footer_button" style="left: 10%;" type="button" value="speak 1" onclick="sendCmd(this.value); " />
+<input id="footer_button" style="left: 20%;" type="button" value="speak 2" onclick="sendCmd(this.value); " />
+<input id="footer_button" style="left: 30%;" type="button" value="speak 3" onclick="sendCmd(this.value); " />
+<input id="footer_button" style="left: 40%;" type="button" value="speak 4" onclick="sendCmd(this.value); " />
+<input id="footer_button" style="left: 50%;" type="button" value="photo" onclick="sendCmd(this.value); " />
+<input id="footer_button" style="left: 60%;" type="button" value="acc" onclick="sendCmd(this.value); " />
+<input id="footer_button" style="left: 70%;" type="button" value="dec" onclick="sendCmd(this.value); " />
+<input id="footer_button" style="left: 90%;" type="button" value="quit" onclick="sendCmd(this.value); " />
+</div>
+
+<script>
+
+// Creates the websockets connection
+function sendCmd(cmd)
+{
+    command = cmd
+    var $txt = $("#ip_data");                  // assigns the data(hostname/ip address) entered in the text box
+    name = $txt.val()
+    var name = "192.168.0.10";                      // Variable name contains the string(hostname/ip address) entered in the text box
+
+    var host =  "ws://"+name+":9093/ws";     // combines the three string and creates a new string
+    var socket = new WebSocket(host);
+    var $btnSend = $("#sendtext");
+    //$txt.focus();
+
+    // event handlers for UI
+    $btnSend.on('click',function()
+    {
+        var text = $txt.val();
+        if(text == "")
+        {
+            return;
+        }
+        $txt.val("");
+    });
+    $txt.keypress(function(evt)
+    {
+        if(evt.which == 13)
+        {
+            $btnSend.click();
+        }
+    });
+
+    // event handlers for websocket
+    if(socket)
+    {
+        var count =1;
+        socket.onopen = function()
+        {
+            count = 0;
+            arrows();     // function for detecting keyboard presses
+            buttons();    // function for detecting the button press on webpage
+        }
+        //Send the button pressed backed to the Raspberry Pi
+        function buttons()
+        {
+            socket.send(command);
+        }
+        function arrows()
+        {
+            document.onkeyup = KeyCheck;
+            function KeyCheck()
+            {
+                var KeyID = event.keyCode;
+                switch(KeyID)
+                {
+                case 8:
+                socket.send("brake");
+                break;
+                case 37:
+                socket.send("left");
+                break;
+                case 38:
+                socket.send("up");
+                break;
+                case 39:
+                socket.send("right");
+                break;
+                case 40:
+                socket.send("down");
+                break;
+                }
+            }
+        }
+        socket.onmessage = function(msg)
+        {
+            showServerResponse(msg.data);
+        }
+        socket.onclose = function()
+        {
+            //alert("connection closed....");
+            //showServerResponse("The connection has been closed.");
+        }
+    }
+    else
+    {
+        console.log("invalid socket");
+    }
+}
+
+
+jQuery(function($)
+{
+  if (!("WebSocket" in window))
+  {
+    alert("Your browser does not support web sockets");
+  }
+});
+
+
+function layoutControls() {
+
+
+    var h =$(window).height();
+    var w =$(window).width();
+
+    var joystick = $('#joystick');
+    if (w>h)
+    {
+        joystick.css( 'height', h/3 );
+        joystick.css( 'width', h/3 );
+    }
+    else
+    {
+        joystick.css( 'height', w/3 );
+        joystick.css( 'width', w/3 );
+    }
+
+    var camera = $('#camera');
+
+    h=h * 0.9  // taking away header and footer
+    h_min=w / 3 *2;
+    w_min=h / 2 *3;
+
+    if (w>w_min)
+        {
+        camera.css( 'height', h);
+        camera.css( 'width', w_min);
+    }
+    else
+    {
+        camera.css( 'height', h_min );
+        camera.css( 'width', w);
+    }
+
+
+}
+
+$(window).on( "orientationchange", function() {setTimeout( layoutControls, 300 ); } );
+$(window).on("resize", function(){layoutControls();});
+
+
+$(document).ready(function() {
+    cameraURL = "http://192.168.0.10:9094/image.mjpg";
+    $("#camera").attr( "src", cameraURL );
+    //setInterval( function() {$("#camera").attr( "src", cameraURL );}, 1000 );
+    layoutControls();
+});
+
+
+</script>
+</body>
+</html>
